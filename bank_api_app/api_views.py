@@ -14,7 +14,7 @@ def api_routes():
         'accounts':'api/accounts',
         'account by id':'api/account',
         'deposit funds':'transactions/deposit',
-        'withdraw funds':'transactions/withdraw'
+        'withdraw funds':'transactions/withdraw',
     }
     
 #Users
@@ -25,9 +25,9 @@ def get_all_users():
         return jsonify([ account.to_dict() for account in users])
     else:
         pass
-        #Implement create new user
+        #Implement create new user(Ayanda)
 
-@api_views.route('/users/<user_id>')
+@api_views.route('/users/<user_id>' , methods = ['GET','DELETE'])
 def get_user(user_id):
     user = User.query.get(user_id)
     if not user:
@@ -44,26 +44,45 @@ def get_all_accounts():
         return jsonify([ account.to_dict() for account in accounts])
     else:
         pass
-        #Implement new account creation
+        #Implement new account creation (Ayanda)
+        """
+            The client must send the user id to create the account with , if user id already has an account
+            return 403 error , account already created
+            if user id does not exist return 404 error
+            otherwise create a new account
+        """
 
 @api_views.route('/accounts/<account_id>' , methods = ['GET' , 'PUT' , 'DELETE'])
 def get_account(account_id):
+    account = Account.query.get(account_id)
+    if not account:
+        abort(404 , "Account not found")
+        return
     if request.method == "GET":
-        account = Account.query.get(account_id)
-        if not account:
-            abort(404 , "Account not found")
-            return
         return jsonify(account.to_dict())
-    
     elif request.method == "PUT":
-        #Update method
+        #Update method (Thandeka)
+        """
+        The client must send their user id to validate request
+        if user id does not exist return 404 error , user does not exist
+        if user id exist but does not link with the current account return 403 error not authorised to update that account
+
+        """
         pass
     
     else:
-        #Delete method
+        #Delete method (Nokwanda)
+
+        """
+            The client must send the user id to validate that it is their account
+            if the client fails to send user id or sends an user id that does not match account,
+            return unauthorised 403 error abort(403 , "The mistake they made")
+            if user id and account id link , delete the account not the user
+
+        """
         pass
 
-#Transactions
+#Transactions(Sibusiso)
 @api_views.route('/transactions/deposit' , methods = ['POST'])
 def deposit():
     pass
@@ -76,8 +95,6 @@ def withdraw():
 # def transfer():
 #     #if there is time we can implement transafer
 #     pass
-
-
 
 
 
