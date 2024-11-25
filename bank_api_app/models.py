@@ -45,10 +45,11 @@ class Account(db.Model):
     
     def to_dict(self):
         return {
-            "id": self.id,
+            "account_number":self.id,
             "balance": self.balance,
             "first_name": self.first_name,
             "last_name":self.last_name,
+            "user_id":self.user_id
         }
     
     
