@@ -1,10 +1,11 @@
+from bank_api_app import create_app
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
 
-@app.route("/")
-def hello_world():
-    return "<h1>Hello World</h1>"
+#create setup app routes
+app = create_app()
 
+#run app
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
