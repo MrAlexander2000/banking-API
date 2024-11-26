@@ -75,7 +75,6 @@ def get_account(account_id):
 
         """
         pass
-    
     else:
         #Delete method (Nokwanda)
 
@@ -89,6 +88,12 @@ def get_account(account_id):
         pass
 
 #Transactions(Sibusiso)
+@api_views.route('/transactions/')
+def transactions():
+    transactions = Transaction.query.all()
+    return jsonify(transactions)
+
+
 @api_views.route('/transactions/<account_id>')
 def transaction_history(account_id):
     try:
@@ -103,8 +108,13 @@ def transaction_history(account_id):
 @api_views.route('/transactions/deposit' , methods = ['POST'])
 def deposit():
     data = request.get_json()
+    # check if all necesarry keys were added
+    if not validate_keys(data , ['user_id' , 'account_id' , 'amount']):
+        return Response(json.dumps({"error":f'Invalid Information expected {{"amount":"xxx" , "user_id":"xxx" , "account_id":"xxx"}} but got {data}"'}) , mimetype='application/json' , status=403)        
+    #if all keys where correctly entered validate keys
     status = validate_user_and_account_transaction(data , 'withdraw')
     if isinstance(status , tuple):
+        user , account = status
         return Response(json.dumps({"success":"Amount deposited"}) , mimetype='application/json' , status=201)
     return status
     
@@ -120,9 +130,9 @@ def withdraw():
     if isinstance(status , tuple):
         user , account = status
         account.balance += round(float(data['amount']) , 2)
-        transaction = Transaction(account_id = account.id , amount = round(float(data['amount']) , 2) , type = 'deposit' , account=account)
-        account.session.commit()
-        transaction.session.commit()
+        transaction = Transaction(account_id = data['account_id'] , amount = round(float(data['amount']) , 2) , type = 'deposit' , account=account)
+        db.session.add(transaction)
+        db.session.commit()
         return Response(json.dumps({"success":"Amount Withdrawn"}) , mimetype='application/json' , status=201)
     return status
 
