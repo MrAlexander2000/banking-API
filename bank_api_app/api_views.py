@@ -76,16 +76,17 @@ def get_account(account_id):
         """
         pass
     else:
+        for user_id,account in validate_user_and_account_transaction:
+            if user_id in account:
+                request.method == "DELETE"
+                return jsonify("ACCOUNT DELETED SUCCESSFULLY!")
+            else:
+                return (404 ,'USER DOES NOT EXIST!')
+
+
+
         #Delete method (Nokwanda)
 
-        """
-            The client must send the user id to validate that it is their account
-            if the client fails to send user id or sends an user id that does not match account,
-            return unauthorised 403 error abort(403 , "The mistake they made")
-            if user id and account id link , delete the account not the user
-
-        """
-        pass
 
 #Transactions(Sibusiso)
 @api_views.route('/transactions/')
@@ -147,9 +148,6 @@ def validate_user_and_account_transaction(data:dict , type:str) -> Union[tuple ,
         #verify user matches account
         if account.user_id != int(data['user_id']):
             raise User_and_Account
-        for key in data:
-            if key not in ['user_id' , 'account_id' , 'amount']:
-                raise Exception
         return user , account
         # return Response(json.dumps({"success":"Amount deposited"}) , mimetype='application/json' , status=201)
     except NoUser:
