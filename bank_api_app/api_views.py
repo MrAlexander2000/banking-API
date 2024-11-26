@@ -1,10 +1,10 @@
 from flask import Blueprint , jsonify , abort , request , Response
 from .models import Account , User , Transaction , db
 from werkzeug.security import generate_password_hash, check_password_hash
-from .utils import unique_id
+from .utils import *
 from .exceptions import *
 import json
-
+from typing import Union
 
 api_views = Blueprint('api_views' , __name__ , url_prefix='/api/')
 
@@ -15,9 +15,9 @@ def api_routes():
         'users by id':'api/users/<user_id>',
         'accounts':'api/accounts',
         'account by id':'api/account',
+        'transaction history':'transactions/<account_id>',
         'deposit funds':'transactions/deposit',
         'withdraw funds':'transactions/withdraw',
-        'transfer funds':'transactions/transfer',
     }
     
 #Users
@@ -89,11 +89,22 @@ def get_account(account_id):
         pass
 
 #Transactions(Sibusiso)
+@api_views.route('/transactions/<account_id>')
+def transaction_history(account_id):
+    try:
+        if not Account.query.get(account_id):
+            raise NoAccount
+        transactions = Transaction.query.filter_by(account_id = account_id).all()
+        return jsonify(transactions)
+    except NoAccount:
+        return Response(json.dumps({"error":"Account does not exist"}) , mimetype='application/json' , status=404)
+
+
 @api_views.route('/transactions/deposit' , methods = ['POST'])
 def deposit():
     data = request.get_json()
-    status = transact(data , 'withdraw')
-    if status == 'success':
+    status = validate_user_and_account_transaction(data , 'withdraw')
+    if isinstance(status , tuple):
         return Response(json.dumps({"success":"Amount deposited"}) , mimetype='application/json' , status=201)
     return status
     
@@ -101,17 +112,16 @@ def deposit():
 @api_views.route('/transactions/withdraw' , methods = ['POST'])
 def withdraw():
     data = request.get_json()
-    status = transact(data , 'withdraw')
-    if status == 'success':
+    # check if all necesarry keys were added
+    if not validate_keys(data , ['user_id' , 'account_id' , 'amount']):
+        return Response(json.dumps({"error":f'Invalid Information expected {{"amount":"xxx" , "user_id":"xxx" , "account_id":"xxx"}} but got {data}"'}) , mimetype='application/json' , status=403)        
+    #if all keys where correctly entered validate keys
+    status = validate_user_and_account_transaction(data , 'withdraw')
+    if isinstance(status , tuple):
         return Response(json.dumps({"success":"Amount Withdrawn"}) , mimetype='application/json' , status=201)
     return status
 
-@api_views.route('/transactions/transfer' , methods = ['POST'])
-def transfer():
-    #if there is time we can implement transfer
-    pass
-
-def transact(data:dict , type):
+def validate_user_and_account_transaction(data:dict , type:str):
     try:
         user = User.query.get(data['user_id'])
         if not user:
@@ -125,7 +135,7 @@ def transact(data:dict , type):
         for key in data:
             if key not in ['user_id' , 'account_id' , 'amount']:
                 raise Exception
-        return 'success'
+        return user , account
         # return Response(json.dumps({"success":"Amount deposited"}) , mimetype='application/json' , status=201)
     except NoUser:
         return Response(json.dumps({"error":"User does not exist"}) , mimetype='application/json' , status=404)
@@ -133,6 +143,3 @@ def transact(data:dict , type):
         return Response(json.dumps({"error":"Account does not exist"}) , mimetype='application/json' , status=404)
     except User_and_Account:
         return Response(json.dumps({"error":"current user is not authorised to deposit on this account"}) , mimetype='application/json' , status=403)
-    except Exception as e:
-        return Response(json.dumps({"error":f'Invalid Information expected {{"amount":"xxx" , "user_id":"xxx" , "account_id":"xxx"}} but got {data}"'}) , mimetype='application/json' , status=403)
-
