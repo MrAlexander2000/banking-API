@@ -118,10 +118,15 @@ def withdraw():
     #if all keys where correctly entered validate keys
     status = validate_user_and_account_transaction(data , 'withdraw')
     if isinstance(status , tuple):
+        user , account = status
+        account.balance += round(float(data['amount']) , 2)
+        transaction = Transaction(account_id = account.id , amount = round(float(data['amount']) , 2) , type = 'deposit' , account=account)
+        account.session.commit()
+        transaction.session.commit()
         return Response(json.dumps({"success":"Amount Withdrawn"}) , mimetype='application/json' , status=201)
     return status
 
-def validate_user_and_account_transaction(data:dict , type:str):
+def validate_user_and_account_transaction(data:dict , type:str) -> Union[tuple , dict]:
     try:
         user = User.query.get(data['user_id'])
         if not user:
